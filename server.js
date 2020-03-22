@@ -47,7 +47,7 @@ const postPosts = () => {
 			const writeNotes = JSON.stringify(filterNotes)
 			fs.writeFile(__dirname + '/db/db.json', writeNotes, function (err) {
 				if (err) throw err;
-				console.log(`Added #${req.query.title} : ${req.query.title}`);
+				console.log(`Added #${req.body.title} : ${req.body.title}`);
 			});
 		}
 		res.send(JSON.stringify(notes));
@@ -56,37 +56,38 @@ const postPosts = () => {
 	app.post('/api/notes',function(req, res){
 		res.setHeader('Content-Type', 'application/json');
 		// Begin check for existing note by ID
-		const inputId = parseInt(req.query.id)
+		const inputId = parseInt(req.body.id)
 		const noteIdArray = [];
 		notes.forEach(function (note) {
 			noteIdArray.push(note.id);
 		});
 		const idCheck = noteIdArray.includes(inputId);
-		console.log(req.query.id + idCheck)
+		console.log(req.body.id)
+		console.log(idCheck)
 		if (idCheck){
-			console.log(`ID #${req.query.id} exists, let's update it`)
+			console.log(`ID #${req.body.id} exists, let's update it`)
 			// Update existing note
 			var filterNotes = notes.filter(function(obj) {
 				return obj.id !== inputId; 
 			})
 			console.log(filterNotes)
-			const newNote = new Note(inputId, req.query.title, req.query.text, uniqueOrder())
+			const newNote = new Note(inputId, req.body.title, req.body.text, uniqueOrder())
 			filterNotes.push(newNote)
 			filterNotes.sort((a, b) => a.order - b.order); // Sort by order ID
 			const writeNotes = JSON.stringify(filterNotes)
 			fs.writeFile(__dirname + '/db/db.json', writeNotes, function (err) {
 				if (err) throw err;
-				console.log(`Saved ${req.query.title}`);
+				console.log(`Saved ${req.body.title}`);
 			});
 			res.send(JSON.stringify(notes));
-		} else if (req.query.title){
-			const newNote = new Note(uniqueID(),req.query.title, req.query.text, uniqueOrder())
+		} else if (req.body.title){
+			const newNote = new Note(uniqueID(),req.body.title, req.body.text, uniqueOrder())
 			notes.push(newNote)
 			notes.sort((a, b) => a.order - b.order); // Sort by order ID
 			const writeNotes = JSON.stringify(notes)
 			fs.writeFile(__dirname + '/db/db.json', writeNotes, function (err) {
 				if (err) throw err;
-				console.log(`Saved ${req.query.title}`);
+				console.log(`Saved ${req.body.title}`);
 			});
 			res.send(JSON.stringify(notes));
 		}

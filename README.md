@@ -1,11 +1,12 @@
 # ExpressNotes
+**Demo:** https://pacific-sierra-87761.herokuapp.com/notes
 
 ## Description
 
 Application that writes, saves, and deletes notes. This application uses an Express backend and saves and retrieves note data from a JSON file using the `fs` module.
 
-  * GET `/notes` - Returns the `notes.html` file
   * GET `*` - Return the `index.html` file
+  * GET `/notes` - Returns the `notes.html` file
   * GET `/api/notes` - Return all saved notes as JSON.
   * POST `/api/notes` -Recieves a new note, adds it to the `db.json` file, and then returns the new note to the client.
   * DELETE `/api/notes/:id` - The id of a note to delete

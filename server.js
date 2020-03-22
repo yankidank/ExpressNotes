@@ -29,47 +29,77 @@ module.exports = function(app) {
  */
 const postPosts = () => {
 	
-	axios
-		.post('/api/notes')
-		.then((response) => { console.log(response) })
-		.catch((error) => { console.error(error) });
-	
-	axios
-		.get("/api/notes")
-		.then((response) => { console.log(response) })
-		.catch((error) => { console.error(error) });
+	app.get('/api/notes',function(req, res){
+		res.setHeader('Content-Type', 'application/json');
+		res.send(JSON.stringify(notes));
+	})
 
-	axios
-		.get("/api/notes/:id", function(req, res) {
-		var id = req.params.id;
-		notes = JSON.parse(fs.readFileSync(__dirname + '/db/db.json'))
-		const updatedNotes = notes.filter(note => note.id != id);
-		fs.writeFile(__dirname + '/db/db.json', updatedNotes, function (err) {
-			if (err) return console.log(err);
-			console.log('Removed ID '+id+' from db.json');
+	app.delete('/api/notes/:id', function(req, res){
+		console.log(req.params.id)
+		var inputId = parseInt(req.params.id);
+		console.log('Attempting to remove note #'+inputId)
+		res.setHeader('Content-Type', 'application/json');
+		if (inputId){
+			const filterNotes = notes.filter(function(obj) {
+				return obj.id !== inputId; 
+			})
+			notes = filterNotes
+			const writeNotes = JSON.stringify(filterNotes)
+			fs.writeFile(__dirname + '/db/db.json', writeNotes, function (err) {
+				if (err) throw err;
+				console.log(`Added #${req.query.title} : ${req.query.title}`);
+			});
+		}
+		res.send(JSON.stringify(notes));
+	})
+
+	app.post('/api/notes',function(req, res){
+		res.setHeader('Content-Type', 'application/json');
+		// Begin check for existing note by ID
+		const inputId = parseInt(req.query.id)
+		const noteIdArray = [];
+		notes.forEach(function (note) {
+			noteIdArray.push(note.id);
 		});
-		console.log('Return remaining notes (No ID '+id+')');
-		})
-		.then(({ data: { updatedNotes } }) => res.json(updatedNotes))
-		.catch((error) => { console.error(error) });
-	
-	axios
-		.get('/notes', function(req, res){
-			res.sendFile('notes.html');
-		})
-		.catch((error) => { console.error(error) });
-
-	axios
-		.get('/', function(req, res){
-			res.sendFile('index.html');
-		})
-		.catch((error) => { console.error(error) });
-
-	axios
-		.get("*", function(req, res) {
-			res.sendFile('index.html');
-		})
-		.catch((error) => { console.error(error) });
+		const idCheck = noteIdArray.includes(inputId);
+		console.log(req.query.id + idCheck)
+		if (idCheck){
+			console.log(`ID #${req.query.id} exists, let's update it`)
+			// Update existing note
+			var filterNotes = notes.filter(function(obj) {
+				return obj.id !== inputId; 
+			})
+			console.log(filterNotes)
+			const newNote = new Note(inputId, req.query.title, req.query.text, uniqueOrder())
+			filterNotes.push(newNote)
+			filterNotes.sort((a, b) => a.order - b.order); // Sort by order ID
+			const writeNotes = JSON.stringify(filterNotes)
+			fs.writeFile(__dirname + '/db/db.json', writeNotes, function (err) {
+				if (err) throw err;
+				console.log(`Saved ${req.query.title}`);
+			});
+			res.send(JSON.stringify(notes));
+		} else if (req.query.title){
+			const newNote = new Note(uniqueID(),req.query.title, req.query.text, uniqueOrder())
+			notes.push(newNote)
+			notes.sort((a, b) => a.order - b.order); // Sort by order ID
+			const writeNotes = JSON.stringify(notes)
+			fs.writeFile(__dirname + '/db/db.json', writeNotes, function (err) {
+				if (err) throw err;
+				console.log(`Saved ${req.query.title}`);
+			});
+			res.send(JSON.stringify(notes));
+		}
+	});
+	app.get('/notes',function(req, res){
+		res.sendFile(__dirname + '/public/notes.html');
+	})
+	app.get('/',function(req, res){
+		res.sendFile(__dirname + '/public/index.html');
+	})
+	app.get('*',function(req, res){
+		res.sendFile(__dirname + '/public/index.html');
+	})
 }
 postPosts();
 
@@ -77,6 +107,7 @@ postPosts();
 // DATA
 // ===============================
 var notes = JSON.parse(fs.readFileSync(__dirname + '/db/db.json'))
+notes.sort((a, b) => a.order - b.order); // Sort by order ID
 
 // ===============================
 // FUNCTIONS & CLASSES
@@ -91,10 +122,20 @@ function uniqueID(){
 	let nextID = ++sortArray[0]
 	return parseInt(nextID)
 }
-function Note(id, title, description, order) {
+function uniqueOrder(){
+	let uniqueArray = []
+	for (let index = 0; index < notes.length; index++) {
+		uniqueArray.push(notes[index].order)
+	}
+	let sortArray = []
+	sortArray = uniqueArray.sort(function(a, b){return b-a})
+	let nextID = ++sortArray[0]
+	return parseInt(nextID)
+}
+function Note(id, title, text, order) {
 	this.id = id;
 	this.title = title;
-	this.description = description;
+	this.text = text;
 	this.order = order;
 }
 // ===============================

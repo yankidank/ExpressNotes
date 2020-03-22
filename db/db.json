@@ -1,1 +1,1 @@
-[{"title":"Test Title","text":"Test text"}]
+[{"id":1,"title":"First title","text":"First text area","order":1}, {"id":2,"title":"Second post title","text":"Hello world","order":2}]
